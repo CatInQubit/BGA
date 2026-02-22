@@ -2,6 +2,22 @@
 
 This repository implements a robust Intrusion Detection System (IDS) specifically designed for Industrial Internet of Things (IIoT) environments. The framework integrates **WGAN-GP data augmentation** to address class imbalance and a **BiLSTM with Residual Gated Attention (BGA)** to enhance feature extraction and model interpretability.
 
+---
+
+## 📊 Datasets
+
+The experiments are conducted using the following datasets/subsets. The labels used in the code (`CMRI`, `MSCI`, `MPCI`, `DoS`) are derived from the Industrial IoT sub-collection of the Edge-IIoTset.
+
+1.  **Edge-IIoTset (Official IEEE Dataport)**  
+    The primary dataset containing comprehensive IoT and IIoT network traffic.  
+    🔗 [https://ieee-dataport.org/documents/edge-iiotset-new-comprehensive-realistic-cyber-security-dataset-iot-and-iiot-applications](https://ieee-dataport.org/documents/edge-iiotset-new-comprehensive-realistic-cyber-security-dataset-iot-and-iiot-applications)
+
+2.  **Edge-IIoTset Industrial Subset (GitHub/Kaggle Version)**  
+    Specifically, the `gas_final.arff.csv` used in this project is part of the industrial sensor sub-collection focused on Gas Sensor, Modbus, and BACnet protocols.  
+    🔗 [https://github.com/MohamedAmineFerrag/Edge-IIoTset](https://github.com/MohamedAmineFerrag/Edge-IIoTset)
+
+---
+
 ## 🚀 Key Features
 
 1.  **WGAN-GP Data Augmentation**: Utilizes Wasserstein GAN with Gradient Penalty to synthesize minority class samples (e.g., MSCI, MPCI attacks). This ensures a balanced training set, significantly improving the recall of rare attacks.

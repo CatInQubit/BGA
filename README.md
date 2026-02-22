@@ -63,21 +63,5 @@ MODE = 'Main'  # Options: 'Main', 'Ablation', 'Sensitivity', 'Robustness'
     *   **Residual Connection**: Prevents gradient vanishing and retains original temporal context.
 5.  **Output Layer**: Softmax classifier for 5 categories (`Normal`, `CMRI`, `MSCI`, `MPCI`, `DoS`).
 
----
 
-## 📈 Expected Outputs
 
-The system generates several artifacts for analysis:
-*   `attention_heatmap.png`: Visual evidence of the model's focus on malicious vs. normal traffic.
-*   **Detailed Metrics**: Precision, Recall, F1-score, and Accuracy for every attack type.
-*   **Latex-Ready Tables**: The console outputs formatted tables for direct use in academic papers (e.g., Ablation results and Robustness data).
-
----
-
-## 🏷️ Citation
-*This project was developed for research into Industrial Sensor Network Security. If you find this code useful for your research, please cite the corresponding thesis/paper.*
-
---- 
-**Author**: CatInQubit  
-**Last Updated**: 2024  
-**License**: MIT License

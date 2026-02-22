@@ -21,7 +21,7 @@ class Generator(nn.Module):
             nn.Linear(128, 256),
             nn.ReLU(True),
             nn.Linear(256, output_dim),
-            nn.Sigmoid() # 配合 MinMaxScaler，将输出限制在 [0, 1]
+            nn.Sigmoid() 
         )
     def forward(self, z):
         return self.model(z)
@@ -160,5 +160,6 @@ def load_and_process_data(file_path, batch_size=64, apply_wgan=True):
     print(f"\n处理完成！最终训练样本数: {len(X_train_final)}, 特征数: {X_train_final.shape[1]}")
     
     return train_loader, X_test_tensor, Y_test_tensor, X_train_final.shape[1], num_classes
+
 
 

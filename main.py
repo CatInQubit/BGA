@@ -7,35 +7,26 @@ import seaborn as sns
 import time
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-# 导入自定义模块
+
 from model import BiLSTMWithResidualGatedAttention
 from data_loader import load_and_process_data
 
-# === 1. 全局配置参数 (保持不变) ===
-FILE_PATH = r'D:/2024技术学习/项目/OTIT项目/焦锐健论文/data/gas_final.arff.csv' 
+FILE_PATH = r'data/gas_final.arff.csv' 
 NUM_EPOCHS = 20
 LEARNING_RATE = 0.001
 BATCH_SIZE = 64
 
-# 定义类别名称 (对齐 Edge-IIoT 工业子集)
+
 TARGET_NAMES = ['Normal', 'CMRI', 'MSCI', 'MPCI', 'DoS']
 
-# ==========================================================
-# 模式切换开关：
-# 'Main'        -> 【主实验模式】保留所有绘图：Loss、混淆矩阵、门控热图。
-# 'Ablation'    -> 【消融实验模式】保留原有 6 指标对比大表输出。
-# 'Sensitivity' -> 【敏感性分析模式】保留维度与头数 F1 趋势汇总。
-# 'Robustness'  -> 【新增：抗噪测试】专门产出论文 Table 4.4 的对比数据。
 MODE = 'Main' 
-# ==========================================================
+
 
 def plot_heatmap(model, X_test, y_true, device):
-    """
-    【原有核心功能】：生成 Normal vs Attack 的可解释性对比热图。
-    """
+
     model.eval()
     try:
-        # 寻找测试集中第一个正常样本和第一个攻击样本
+
         normal_idx = np.where(y_true == 0)[0][0]
         attack_idx = np.where(y_true != 0)[0][0] 
         attack_label = TARGET_NAMES[y_true[attack_idx]]
@@ -62,14 +53,13 @@ def plot_heatmap(model, X_test, y_true, device):
     plt.show()
 
 def run_experiment_engine(variant_name='BGA', show_plots=True, hidden_dim=64, num_heads=4, return_model=False):
-    """
-    【通用运行引擎】：整合了原有所有指标采集和绘图逻辑，增加模型返回接口。
-    """
-    # 加载数据 (data_loader 内部会打印 ANOVA 排名和 WGAN 进度)
+
+
+
     train_loader, X_test_tensor, Y_test_tensor, input_dim, output_dim = load_and_process_data(FILE_PATH, BATCH_SIZE)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # 初始化模型
+
     model = BiLSTMWithResidualGatedAttention(
         input_dim, output_dim, 
         hidden_dim=hidden_dim, 
@@ -81,7 +71,7 @@ def run_experiment_engine(variant_name='BGA', show_plots=True, hidden_dim=64, nu
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    # --- 训练循环 (Main模式详细输出) ---
+
     loss_history = []
     if show_plots:
         print(f"\n--- 启动训练变体: {variant_name} (Hidden:{hidden_dim}, Heads:{num_heads}) ---")
@@ -103,7 +93,7 @@ def run_experiment_engine(variant_name='BGA', show_plots=True, hidden_dim=64, nu
         if show_plots:
             print(f'Epoch {epoch + 1}/{NUM_EPOCHS}, Loss: {avg_loss:.4f}')
 
-    # --- 评估阶段 ---
+
     model.eval()
     X_test_device = X_test_tensor.to(device)
     start_time = time.time()
@@ -114,31 +104,30 @@ def run_experiment_engine(variant_name='BGA', show_plots=True, hidden_dim=64, nu
     
     y_true_indices = Y_test_tensor.argmax(dim=1).cpu().numpy()
 
-    # 关键修复：加入 TARGET_NAMES 映射，防止打印错乱
+
     acc = accuracy_score(y_true_indices, y_pred_labels)
     report_dict = classification_report(y_true_indices, y_pred_labels, target_names=TARGET_NAMES, output_dict=True, digits=4)
     weighted_avg = report_dict['weighted avg']
 
-    # --- 可视化 (仅在 Main 模式触发) ---
+
     if show_plots:
         print(f"\n[Overall Accuracy]: {acc:.4f}")
         print("\n[Detailed Classification Report]:")
         print(classification_report(y_true_indices, y_pred_labels, target_names=TARGET_NAMES, digits=4))
-        
-        # 1. 原有 Loss 曲线
+
         plt.figure(figsize=(8, 4))
         plt.plot(loss_history, color='royalblue', label='Training Loss', linewidth=2)
         plt.title(f'Loss Convergence ({variant_name})')
         plt.xlabel('Epoch'); plt.ylabel('Loss'); plt.grid(True); plt.legend(); plt.show()
 
-        # 2. 原有 混淆矩阵
+
         cm = confusion_matrix(y_true_indices, y_pred_labels)
         plt.figure(figsize=(8, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=TARGET_NAMES, yticklabels=TARGET_NAMES)
         plt.title(f'Confusion Matrix ({variant_name})')
         plt.xlabel('Predicted'); plt.ylabel('True'); plt.show()
 
-        # 3. 原有 门控热图
+
         if variant_name == 'BGA':
             plot_heatmap(model, X_test_device, y_true_indices, device)
 
@@ -157,11 +146,11 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if MODE == 'Main':
-        # 执行原有主实验逻辑
+
         run_experiment_engine(variant_name='BGA', show_plots=True)
     
     elif MODE == 'Ablation':
-        # 执行原有消融实验大表逻辑
+
         print(">>> 启动消融对比实验 (静默模式)...")
         results = []
         for v in ['BaseLSTM', 'BiLSTM', 'BiLSTM+MHA', 'BGA']:
@@ -176,7 +165,7 @@ if __name__ == "__main__":
         print("="*95)
 
     elif MODE == 'Sensitivity':
-        # 执行原有参数敏感性分析
+
         print(">>> 启动超参数敏感性分析...")
         dim_stats = []
         for d in [32, 64, 128]:
@@ -184,20 +173,18 @@ if __name__ == "__main__":
             dim_stats.append((d, res['f1']))
             print(f"Dimension {d} 完成测试.")
         
-        # 输出汇总 (用于画敏感性折线图)
+
         print("\n" + "="*40)
         print("【敏感性分析汇总 (Weighted F1)】")
         for d, f in dim_stats: print(f"Hidden Dim {d:<3} : F1 = {f:.4f}")
         print("="*40)
 
     elif MODE == 'Robustness':
-        # 【新增功能】：产出论文 Table 4.4 针对加密噪音的鲁棒性实验数据
         print(">>> 启动抗噪鲁棒性应力测试 (Table 4.4)...")
-        # 修改 main.py 里的 Robustness 模式
-        noise_levels = [0.0, 0.002, 0.005, 0.01] # 无、低、中、高噪声
+        noise_levels = [0.0, 0.002, 0.005, 0.01]
         robust_data = {}
 
-        for v_name in ['BiLSTM+MHA', 'BGA']: # 对比普通注意力与门控注意力
+        for v_name in ['BiLSTM+MHA', 'BGA']: 
             print(f"\n1. 正在准备基准模型: {v_name}")
             stats, trained_model, x_test_raw, y_test_raw = run_experiment_engine(
                 variant_name=v_name, show_plots=False, return_model=True
@@ -207,7 +194,6 @@ if __name__ == "__main__":
             v_scores = []
             
             for level in noise_levels:
-                # 注入模拟随机噪声 (Gaussian Noise)
                 noise = torch.randn_like(x_test_raw) * level
                 x_noisy = (x_test_raw + noise).to(device)
                 
@@ -216,18 +202,17 @@ if __name__ == "__main__":
                     preds_raw, _ = trained_model(x_noisy)
                     preds = preds_raw.argmax(dim=1).cpu().numpy()
                 
-                # 采集加权 F1
                 rep = classification_report(y_true, preds, target_names=TARGET_NAMES, output_dict=True)
                 v_scores.append(rep['weighted avg']['f1-score'])
                 print(f"   - 噪声水平 {level:<4} 测试完成. F1: {v_scores[-1]:.4f}")
             
             robust_data[v_name] = v_scores
 
-        # 打印符合论文格式的最终表格数据
         print("\n" + "="*75)
         print(f"{'Model Variant':<15} | {'None(0.0)':<10} | {'Low(0.002)':<10} | {'Mid(0.005)':<10} | {'High(0.01)'}")
         print("-" * 75)
         for name, scores in robust_data.items():
             print(f"{name:<15} | {scores[0]:<10.4f} | {scores[1]:<10.4f} | {scores[2]:<10.4f} | {scores[3]:.4f}")
         print("="*75)
+
    
